@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeamNG Classroom Projector</title>
+    <!-- QRCode.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            color: #4CAF50;
+            text-shadow: 0 0 20px #4CAF50;
+        }
+
+        #qr-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.2);
+        }
+
+        #ip-input-container {
+            margin-top: 40px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            padding: 15px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            border: none;
+            width: 300px;
+            text-align: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            border: none;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #1976D2;
+        }
+
+        .url-display {
+            font-size: 2rem;
+            margin-top: 30px;
+            color: #ccc;
+        }
+
+        .url-highlight {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>SCAN TO DRIVE 🚗</h1>
+
+    <div id="qr-container">
+        <div id="qrcode"></div>
+    </div>
+
+    <div class="url-display">
+        Open: <span id="url-text" class="url-highlight">Waiting for IP...</span>
+    </div>
+
+    <div id="ip-input-container">
+        <input type="text" id="ip-input" placeholder="Enter Host IP (e.g. 192.168.x.x)">
+        <button onclick="generateQR()">Generate</button>
+    </div>
+
+    <script>
+        const qrContainer = document.getElementById("qrcode");
+        const ipInput = document.getElementById("ip-input");
+        const urlText = document.getElementById("url-text");
+        let qrCodeObj = null;
+
+        function generateQR() {
+            const ip = ipInput.value.trim();
+            if (!ip) {
+                alert("Please enter a valid IP address!");
+                return;
+            }
+
+            const url = `http://${ip}:8001`;
+
+            // Clear previous QR Code
+            qrContainer.innerHTML = "";
+
+            // Generate new QR Code
+            qrCodeObj = new QRCode(qrContainer, {
+                text: url,
+                width: 400,
+                height: 400,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            urlText.textContent = url;
+
+            // Save to local storage for convenience if page reloaded
+            localStorage.setItem("beamng_host_ip", ip);
+        }
+
+        // Auto-load last used IP
+        window.onload = function () {
+            const lastIp = localStorage.getItem("beamng_host_ip");
+            if (lastIp) {
+                ipInput.value = lastIp;
+                generateQR();
+            }
+        };
+
+        // Allow Enter key to submit
+        ipInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                generateQR();
+            }
+        });
+    </script>
+
+</body>
+
+</html>

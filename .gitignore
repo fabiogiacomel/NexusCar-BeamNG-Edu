@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +206,30 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+=======
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Windows / C++ Artifacts
+*.exe
+*.o
+*.obj
+*.dll
+*.iso
+*.msi
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+>>>>>>> 508f322 (Initial launch: BeamNG Web IDE with Telemetry & QR Code)

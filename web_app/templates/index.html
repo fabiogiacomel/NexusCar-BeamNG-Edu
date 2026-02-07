@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeamNG Web IDE Controller - Python</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #d4d4d4;
+            --accent-color: #007acc;
+            --button-color: #4CAF50;
+            --button-hover: #45a049;
+            --log-bg: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 10px 20px;
+            background-color: #252526;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        #main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #editor-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #3e3e42;
+            padding: 10px;
+        }
+
+        #code-editor {
+            flex: 1;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 16px;
+            outline: none;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        #sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background-color: #252526;
+            min-width: 300px;
+        }
+
+        #controls {
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--button-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        #logs {
+            flex: 1;
+            background-color: var(--log-bg);
+            border: 1px solid #3e3e42;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 2px;
+        }
+
+        .log-entry.info {
+            color: #569cd6;
+        }
+
+        .log-entry.success {
+            color: #6a9955;
+        }
+
+        .log-entry.error {
+            color: #f44747;
+        }
+
+        .log-entry.warn {
+            color: #dcdcaa;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🚗 BeamNG Python Controller (Docker)</h1>
+        <div style="font-size: 0.8rem; color: #888;">Host: host.docker.internal:65432</div>
+    </header>
+
+    <div id="main-container">
+        <div id="editor-container">
+            <textarea id="code-editor" spellcheck="false"># Example Code
+# 'carro' is pre-defined for you!
+
+print("Connecting to car...")
+carro.acelerar(2)  # Drive forward for 2 seconds
+print("Turning left...")
+carro.esquerda(1)  # Turn left for 1 second
+print("Stopping...")
+carro.frear(1)     # Brake
+carro.parar()      # Ensure full stop
+print("Finished driving routine.")
+</textarea>
+        </div>
+
+        <div id="sidebar">
+            <div id="controls">
+                <input type="text" id="pilot_name" placeholder="Seu Nome (Obrigatório)"
+                    style="width: 100%; padding: 10px; box-sizing: border-box; margin-bottom: 10px; background-color: #2d2d2d; color: #d4d4d4; border: 1px solid #3e3e42; border-radius: 4px;">
+                <button id="run-btn" onclick="runCode()">▶ RUN CODE</button>
+            </div>
+            <div style="margin-bottom: 5px; font-weight: bold; color: #ccc;">Console Output:</div>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        const runBtn = document.getElementById('run-btn');
+        const logsObj = document.getElementById('logs');
+        const editor = document.getElementById('code-editor');
+        const pilotNameInput = document.getElementById('pilot_name');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsObj.appendChild(entry);
+            logsObj.scrollTop = logsObj.scrollHeight;
+        }
+
+        async function runCode() {
+            const code = editor.value;
+            const pilotName = pilotNameInput.value.trim();
+
+            if (!pilotName) {
+                log("🚫 Please enter your name to drive!", "error");
+                pilotNameInput.focus();
+                return;
+            }
+
+            if (!code.trim()) {
+                log("Please write some code first!", "warn");
+                return;
+            }
+
+            runBtn.disabled = true;
+            runBtn.textContent = "⏳ Running...";
+            log(`Sending code from Pilot ${pilotName}...`, "info");
+
+            try {
+                const response = await fetch('/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code: code, pilot_name: pilotName })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    log("Execution completed successfully.", "success");
+                    if (data.output) {
+                        log("Output:\n" + data.output, "info");
+                    }
+                } else if (data.status === 'busy') {
+                    log("⚠️ Queue is full/locked: " + data.output, "warn");
+                } else {
+                    log("❌ Error: " + data.output, "error");
+                }
+
+            } catch (error) {
+                log("Network validation error: " + error.message, "error");
+            } finally {
+                runBtn.disabled = false;
+                runBtn.textContent = "▶ RUN CODE";
+            }
+        }
+
+        // Allow tab indentation
+        editor.addEventListener('keydown', function (e) {
+            if (e.key == 'Tab') {
+                e.preventDefault();
+                var start = this.selectionStart;
+                var end = this.selectionEnd;
+
+                // set textarea value to: text before caret + tab + text after caret
+                this.value = this.value.substring(0, start) +
+                    "    " + this.value.substring(end);
+
+                // put caret at right position again
+                this.selectionStart = this.selectionEnd = start + 4;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
